@@ -624,6 +624,12 @@
     overflow:hidden;
   }
 
+  .modal-body{
+    overflow-y:auto;
+    flex:1;
+    min-height:0;
+  }
+
   .modal-header{
     padding:24px 28px 18px;
     border-bottom:1px solid var(--mist);
@@ -795,7 +801,33 @@
     .app{grid-template-columns:1fr;}
     .panel{border-right:none; border-bottom:1px solid var(--mist);}
     .preview-area{position:static; height:auto;}
-    .sheet-frame{transform:scale(.62) !important;}
+  }
+
+  @media (max-width:640px){
+    .panel-header{padding:20px 18px 16px;}
+    .panel-body{padding:16px 18px 36px;}
+    .preview-area{padding:32px 16px;}
+    h1{font-size:21px;}
+
+    .grouped-inputs.cols-2{grid-template-columns:1fr;gap:14px;}
+
+    .tab-bar{padding:8px 10px;}
+    .tab-item{max-width:120px;}
+
+    .checks-row{grid-template-columns:1fr;max-width:100%;}
+
+    .modal-overlay{padding:16px;align-items:flex-end;}
+    .modal-box{max-height:88vh;border-radius:18px 18px 0 0;}
+    .summary-row{grid-template-columns:1fr;gap:2px;}
+    .summary-row b{margin-top:4px;}
+    .gallery-grid{grid-template-columns:1fr;padding:16px 18px 24px;}
+    .modal-toolbar{padding:12px 18px;}
+    .modal-header{padding:20px 18px 14px;}
+    .modal-actions{padding:14px 18px 20px;flex-wrap:wrap-reverse;}
+    .modal-actions .btn{flex:1;}
+    .filename, #summary{padding-left:18px;padding-right:18px;}
+
+    .toast{left:16px;right:16px;bottom:16px;text-align:center;}
   }
 
 </style>
@@ -974,6 +1006,10 @@
                     <option>Bella Sarat</option>
                     <option>Luisa Alburez</option>
                     <option>Alejandro Torres</option>
+                    <option>Michelle Aguirre</option>
+                    <option>Eunice Delgado</option>
+                    <option>Keila González</option>
+                    <option value="__otro__">Otro</option>
                   </select>
                 </div>
                 <div class="grouped-mini">
@@ -987,6 +1023,12 @@
                     <option>Cristina Olmedo</option>
                     <option value="__otro__">Otro</option>
                   </select>
+                </div>
+              </div>
+              <div class="grouped-inputs cols-2" id="requestedByOtherWrap" style="display:none;margin-top:10px;">
+                <div class="grouped-mini" style="grid-column:1/-1;">
+                  <span class="grouped-mini-label">Nombre de quien solicita</span>
+                  <input class="field-input" id="requestedByOther" placeholder="Escribe el nombre completo">
                 </div>
               </div>
               <div class="grouped-inputs cols-2" id="authorizedByOtherWrap" style="display:none;margin-top:10px;">
@@ -1049,7 +1091,7 @@
     <div class="modal-header">
       <div>
         <p class="modal-title">Historial</p>
-        <p class="modal-warning">Solicitudes guardadas en este navegador. Para respaldar una SDP fuera de esta app, usa Guardar, PDF, Word o Imprimir.</p>
+        <p class="modal-warning">Solicitudes guardadas en este navegador. Para respaldar una SDP fuera de esta app, usa Imprimir o guarda como PDF desde el diálogo de impresión.</p>
       </div>
       <button class="modal-close" id="close-gallery-btn" type="button" onclick="closeHistory()">×</button>
     </div>
@@ -1075,11 +1117,13 @@
       </div>
       <button class="modal-close" type="button" onclick="closeModal()">×</button>
     </div>
-    <div id="fileNameBox" class="filename" style="padding-top:18px;">
-      <label class="field-label" style="margin-bottom:7px;display:block;">Nombre para guardar con nomenclatura SDP_Nombre</label>
-      <input id="fileNameInput" class="field-input" placeholder="Ej. Grupo_Impre">
+    <div class="modal-body">
+      <div id="fileNameBox" class="filename" style="padding-top:18px;">
+        <label class="field-label" style="margin-bottom:7px;display:block;">Nombre para guardar con nomenclatura SDP_Nombre</label>
+        <input id="fileNameInput" class="field-input" placeholder="Ej. Grupo_Impre">
+      </div>
+      <div id="summary" class="summary"></div>
     </div>
-    <div id="summary" class="summary"></div>
     <div class="modal-actions">
       <button id="modalCancel" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
       <button id="modalConfirm" class="btn btn-primary">Confirmar</button>
@@ -1121,7 +1165,7 @@ function uid(){return 'sdp_'+Math.random().toString(36).slice(2,9)}
 
 function defaultData(){
   return{paymentType:'transferencia',date:todayISO(),currency:'Q',beneficiary:'',amount:'',bank:'',
-    account:'',accountType:'MONETARIA',concept:'',requestedBy:'Margarita López',authorizedBy:'Alejandro Torres',authorizedByOther:'',filename:'',saved:false,updatedAt:Date.now()}
+    account:'',accountType:'MONETARIA',concept:'',requestedBy:'Margarita López',requestedByOther:'',authorizedBy:'Alejandro Torres',authorizedByOther:'',filename:'',saved:false,updatedAt:Date.now()}
 }
 
 function active(){return tabs.find(t=>t.id===activeId)}
@@ -1137,12 +1181,16 @@ function formData(){
   return{paymentType:getRadio('paymentType'),date:$('date').value,currency:getRadio('currency'),
     beneficiary:$('beneficiary').value.trim(),amount:$('amount').value.trim(),bank:$('bank').value,
     account:$('account').value.trim(),accountType:getRadio('accountType'),concept:$('concept').value.trim(),
-    requestedBy:$('requestedBy').value,authorizedBy:$('authorizedBy').value,authorizedByOther:$('authorizedByOther').value.trim(),
+    requestedBy:$('requestedBy').value,requestedByOther:$('requestedByOther').value.trim(),
+    authorizedBy:$('authorizedBy').value,authorizedByOther:$('authorizedByOther').value.trim(),
     filename:active()?.data.filename||'',saved:false,updatedAt:Date.now()}
 }
 
 function resolvedAuthorizedBy(d){
   return d.authorizedBy==='__otro__' ? (d.authorizedByOther||'') : (d.authorizedBy||'');
+}
+function resolvedRequestedBy(d){
+  return d.requestedBy==='__otro__' ? (d.requestedByOther||'') : (d.requestedBy||'');
 }
 
 function loadToForm(){
@@ -1157,13 +1205,19 @@ function loadToForm(){
   setRadio('accountType',d.accountType||'MONETARIA');
   $('concept').value=d.concept||'';
   $('requestedBy').value=d.requestedBy||'Margarita López';
+  $('requestedByOther').value=d.requestedByOther||'';
   $('authorizedBy').value=d.authorizedBy||'Alejandro Torres';
   $('authorizedByOther').value=d.authorizedByOther||'';
+  toggleRequestedByOther();
   toggleAuthorizedByOther();
   setStatus();
   updateActionState();
 }
 
+function toggleRequestedByOther(){
+  let isOther=$('requestedBy').value==='__otro__';
+  $('requestedByOtherWrap').style.display=isOther?'grid':'none';
+}
 function toggleAuthorizedByOther(){
   let isOther=$('authorizedBy').value==='__otro__';
   $('authorizedByOtherWrap').style.display=isOther?'grid':'none';
@@ -1302,7 +1356,7 @@ function letters(c,v){
 function sheetHTML(){
   let d=active()?.data||defaultData();
   let c=d.currency||'Q';
-  return `<div class="doc-top"><div class="doc-title">Solicitud de Pago</div><div class="ha-wrap"><svg class="ha-logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 265.63 309.18"><g><polygon fill="#033029" points="202.53 179.82 205.46 179.82 203.98 175.59 202.53 179.82"/><polygon fill="#033029" points="136.71 216.01 165.83 216.01 151.27 187.4 136.71 216.01"/><path fill="#033029" d="M0,0V263.66H263.66V0H0ZM99.76,243.92h-16.06v-28.61H35.8v28.61H19.74v-70.28h16.06v27.61h47.89v-27.61h16.06v70.28Zm80.32,0l-7.53-14.86h-42.47l-7.53,14.86h-17.17l37.25-70.28h17.57l37.25,70.28h-17.37Zm16.96-60.81c-.65,.56-1.6,.84-2.87,.84s-2.19-.26-2.92-.77c-.72-.51-1.13-1.32-1.22-2.41h1.83c.09,.59,.33,1.02,.7,1.29s.93,.41,1.66,.41,1.21-.14,1.49-.42c.28-.28,.42-.63,.42-1.04,0-.32-.1-.61-.3-.85-.2-.25-.6-.43-1.22-.54l-1.27-.23c-1.02-.18-1.79-.49-2.32-.91s-.79-1.08-.79-1.97c0-.63,.16-1.16,.49-1.58,.33-.42,.77-.74,1.34-.96,.57-.22,1.22-.32,1.97-.32,.85,0,1.54,.12,2.07,.36,.53,.24,.93,.57,1.2,.97,.27,.4,.45,.86,.53,1.36l-1.75,.25c-.13-.49-.34-.86-.63-1.11s-.77-.36-1.43-.36c-.72,0-1.23,.12-1.53,.37s-.44,.56-.44,.94,.11,.68,.33,.88c.22,.2,.62,.35,1.2,.45l1.36,.26c1.06,.2,1.84,.53,2.32,.99,.49,.46,.73,1.11,.73,1.97s-.32,1.59-.97,2.15Zm9.73,.59l-.85-2.38h-3.88l-.84,2.38h-1.86l3.63-9.82h2.1l3.6,9.82h-1.91Z"/></g><g><path fill="#033029" d="M20.28,283.9h3.69v7.84h8.47v-7.84h3.69v19.64h-3.69v-8.47h-8.47v8.47h-3.69v-19.64Z"/><path fill="#033029" d="M39.29,283.85h3.49v3.11h-3.49v-3.11Zm.03,5.39h3.47v14.3h-3.47v-14.3Z"/><path fill="#033029" d="M45.7,283.9h3.47v19.64h-3.47v-19.64Z"/><path fill="#033029" d="M63.95,301.93c-1.28,1.37-3.03,2.05-5.27,2.05s-4-.66-5.24-1.99-1.86-3.19-1.86-5.57c0-1.58,.29-2.93,.88-4.07,.59-1.14,1.42-2.01,2.49-2.63,1.07-.61,2.34-.92,3.81-.92,2.24,0,3.98,.67,5.23,1.99,1.25,1.33,1.87,3.17,1.87,5.52s-.64,4.26-1.91,5.63Zm-5.24-.76c1.25,0,2.15-.44,2.72-1.32,.57-.88,.85-2.04,.85-3.49s-.28-2.6-.85-3.47c-.57-.86-1.48-1.29-2.72-1.29s-2.13,.43-2.7,1.29c-.57,.86-.85,2.02-.85,3.47s.28,2.61,.84,3.49c.56,.88,1.46,1.32,2.71,1.32Z"/><path fill="#033029" d="M67.43,299.22h3.3c.15,.81,.49,1.38,1.03,1.71,.54,.33,1.29,.49,2.24,.49s1.67-.17,2.09-.49c.42-.33,.63-.77,.63-1.32,0-.48-.14-.88-.41-1.21-.28-.33-.84-.56-1.71-.69l-1.71-.27c-1.72-.28-3.01-.73-3.87-1.38s-1.28-1.62-1.28-2.94,.55-2.42,1.66-3.18c1.11-.76,2.55-1.14,4.33-1.14,1.36,0,2.45,.17,3.29,.51,.83,.34,1.48,.81,1.93,1.42s.76,1.31,.92,2.12l-3.19,.41c-.2-.66-.5-1.16-.91-1.5-.4-.34-1.07-.51-2.01-.51-1.03,0-1.74,.17-2.15,.52-.4,.35-.61,.75-.61,1.21s.15,.86,.45,1.14c.3,.28,.9,.5,1.8,.65l1.9,.33c1.8,.33,3.07,.83,3.82,1.5,.75,.67,1.13,1.66,1.13,2.98s-.51,2.38-1.53,3.19c-1.02,.81-2.54,1.21-4.55,1.21-1.89,0-3.44-.37-4.65-1.11-1.21-.74-1.87-1.96-1.98-3.64Z"/><path fill="#033029" d="M94.94,304.39c-.44,1.1-.87,2-1.28,2.71-.41,.71-.89,1.23-1.44,1.57-.55,.34-1.26,.51-2.12,.51-.94,0-1.84-.15-2.72-.44l.58-2.64c.61,.18,1.14,.28,1.6,.28,.55,0,.98-.17,1.29-.51,.31-.34,.62-.93,.94-1.77l.47-1.29-5.97-13.56h3.82l3.8,9.96,3.44-9.96h3.69l-6.08,15.16Z"/><path fill="#033029" d="M113.81,283.9h4.21l7.21,19.64h-3.82l-1.71-4.76h-7.76l-1.68,4.76h-3.71l7.26-19.64Zm4.95,11.86l-2.94-8.44-2.92,8.44h5.86Z"/><path fill="#033029" d="M126.79,283.9h3.47v19.64h-3.47v-19.64Z"/><path fill="#033029" d="M146.52,301.45c0,1.61-.21,3-.62,4.15-.41,1.16-1.1,2.04-2.08,2.65-.97,.61-2.32,.92-4.04,.92-1.98,0-3.53-.37-4.64-1.11s-1.75-1.92-1.91-3.53h3.36c.15,.73,.46,1.26,.95,1.58,.49,.32,1.22,.48,2.21,.48,1.25,0,2.11-.36,2.59-1.07s.72-1.79,.72-3.22v-1.4c-.53,.7-1.16,1.24-1.9,1.62-.73,.39-1.59,.58-2.56,.58-1.32,0-2.42-.3-3.3-.91-.88-.61-1.54-1.44-1.97-2.52-.43-1.07-.65-2.3-.65-3.67,0-1.45,.25-2.71,.74-3.8,.49-1.08,1.21-1.92,2.13-2.52,.93-.6,2.02-.89,3.29-.89,.81,0,1.58,.15,2.31,.45,.73,.3,1.39,.85,1.98,1.64v-1.65h3.38v12.21Zm-6.96-1.18c1.19,0,2.08-.39,2.65-1.16,.58-.77,.87-1.74,.87-2.92v-.44c0-1.25-.28-2.26-.83-3.03s-1.41-1.16-2.59-1.16c-.99,0-1.81,.35-2.46,1.05s-.98,1.81-.98,3.33c0,1.05,.16,1.88,.47,2.52s.72,1.09,1.22,1.38c.5,.28,1.05,.43,1.64,.43Z"/><path fill="#033029" d="M161.25,301.93c-1.28,1.37-3.03,2.05-5.27,2.05s-4-.66-5.24-1.99c-1.24-1.33-1.86-3.19-1.86-5.57,0-1.58,.29-2.93,.88-4.07,.59-1.14,1.42-2.01,2.49-2.63,1.07-.61,2.34-.92,3.81-.92,2.24,0,3.98,.67,5.23,1.99,1.25,1.33,1.87,3.17,1.87,5.52s-.64,4.26-1.91,5.63Zm-5.24-.76c1.25,0,2.15-.44,2.72-1.32,.57-.88,.85-2.04,.85-3.49s-.28-2.6-.85-3.47c-.57-.86-1.48-1.29-2.72-1.29s-2.13,.43-2.7,1.29c-.57,.86-.85,2.02-.85,3.47s.28,2.61,.84,3.49c.56,.88,1.46,1.32,2.71,1.32Z"/><path fill="#033029" d="M178.92,303.54h-3.36v-1.87c-.57,.75-1.22,1.33-1.95,1.72-.73,.39-1.6,.59-2.59,.59-1.32,0-2.42-.32-3.3-.96-.88-.64-1.54-1.53-1.98-2.65-.44-1.13-.66-2.42-.66-3.87,0-2.38,.55-4.26,1.66-5.64,1.11-1.38,2.63-2.06,4.55-2.06,.75,0,1.49,.15,2.21,.45,.72,.3,1.37,.82,1.94,1.55v-6.9h3.47v19.64Zm-8.6-2.85c.5,.3,1.04,.45,1.61,.45,1.12,0,1.99-.38,2.61-1.14s.94-1.83,.94-3.2v-.77c0-1.52-.31-2.65-.92-3.37-.61-.72-1.44-1.09-2.49-1.09s-1.83,.37-2.48,1.11c-.64,.74-.96,1.98-.96,3.7,0,1.17,.16,2.11,.47,2.81,.31,.7,.72,1.2,1.22,1.5Z"/><path fill="#033029" d="M193.68,301.93c-1.28,1.37-3.03,2.05-5.27,2.05s-4-.66-5.24-1.99c-1.24-1.33-1.86-3.19-1.86-5.57,0-1.58,.29-2.93,.88-4.07,.59-1.14,1.42-2.01,2.49-2.63,1.07-.61,2.34-.92,3.81-.92,2.24,0,3.98,.67,5.23,1.99,1.25,1.33,1.87,3.17,1.87,5.52s-.64,4.26-1.91,5.63Zm-5.24-.76c1.25,0,2.15-.44,2.72-1.32,.57-.88,.85-2.04,.85-3.49s-.28-2.6-.85-3.47c-.57-.86-1.48-1.29-2.72-1.29s-2.13,.43-2.7,1.29c-.57,.86-.85,2.02-.85,3.47s.28,2.61,.84,3.49c.56,.88,1.46,1.32,2.71,1.32Zm1.24-18.05h3.96l-4.02,4.21h-3.19l3.25-4.21Z"/><path fill="#033029" d="M197.99,289.24h3.38v1.98c.72-.9,1.47-1.53,2.26-1.88,.79-.36,1.6-.54,2.45-.54,1.58,0,2.77,.45,3.58,1.33,.81,.89,1.21,2.17,1.21,3.84v9.57h-3.47v-8.91c0-1.06-.2-1.82-.59-2.27s-.99-.67-1.8-.67c-.46,0-.9,.08-1.33,.25-.43,.17-.82,.42-1.17,.77-.35,.31-.61,.65-.78,1-.17,.36-.26,.83-.26,1.42v8.42h-3.47v-14.3Z"/><path fill="#033029" d="M232.33,302.36c-1.29,1.12-3.2,1.68-5.74,1.68s-4.38-.51-5.83-1.54-2.27-2.63-2.45-4.81h3.66c.18,1.17,.65,2.03,1.4,2.57,.75,.54,1.86,.81,3.33,.81s2.43-.28,2.99-.84,.84-1.25,.84-2.08c0-.64-.2-1.21-.59-1.71-.39-.49-1.21-.85-2.43-1.07l-2.53-.47c-2.04-.37-3.58-.98-4.64-1.83-1.05-.85-1.58-2.17-1.58-3.95,0-1.27,.33-2.32,.98-3.16,.65-.84,1.54-1.48,2.68-1.91,1.14-.43,2.45-.65,3.93-.65,1.71,0,3.09,.24,4.14,.73,1.05,.49,1.85,1.13,2.39,1.94,.54,.81,.89,1.72,1.06,2.72l-3.49,.5c-.26-.99-.68-1.73-1.27-2.21-.59-.49-1.54-.73-2.86-.73-1.45,0-2.47,.25-3.05,.74s-.88,1.12-.88,1.87,.22,1.36,.66,1.76c.44,.4,1.24,.71,2.39,.91l2.72,.52c2.13,.4,3.68,1.06,4.65,1.98,.97,.92,1.46,2.23,1.46,3.93s-.65,3.17-1.94,4.29Z"/><path fill="#033029" d="M236.25,299.5h3.6v4.04h-3.6v-4.04Z"/><path fill="#033029" d="M248.88,283.9h4.21l7.21,19.64h-3.82l-1.71-4.76h-7.76l-1.68,4.76h-3.71l7.26-19.64Zm4.95,11.86l-2.94-8.44-2.92,8.44h5.86Z"/><path fill="#033029" d="M262.03,299.5h3.6v4.04h-3.6v-4.04Z"/></g></svg><div class="ha-text">Hilos y Algodón, S.A.</div></div></div><div class="pay-row"><div class="label-pdf">MARQUE CON X:</div><div class="label-pdf" style="text-align:right">TRANSFERENCIA</div><div class="box-x">${d.paymentType==='transferencia'?'X':''}</div><div class="label-pdf" style="text-align:right">CHEQUE</div><div class="box-x">${d.paymentType==='cheque'?'X':''}</div></div><div class="line-row"><div class="label-pdf">FECHA:</div><div class="u">${esc(formatDate(d.date))}</div></div><div class="line-row"><div class="label-pdf">A NOMBRE DE</div><div class="u">${esc((d.beneficiary||'').toUpperCase())}</div></div><div class="line-row"><div class="label-pdf">MONTO EN ${esc(c)}</div><div class="u">${esc(formatMoney(c,d.amount))}</div></div><div class="line-row"><div class="label-pdf">EN LETRAS</div><div class="u">${parseAmount(d.amount)?esc(letters(c,d.amount)):''}</div></div><div class="concept-gap"></div><div class="line-row concept-row"><div class="label-pdf">CONCEPTO:</div><div class="u concept">${esc((d.concept||'').toUpperCase())}</div></div><div class="line-row"><div class="label-pdf">No. DE CUENTA BANCARIA:</div><div class="u">${esc(d.account||'')}</div></div><div class="bank-row"><div class="label-pdf">BANCO:</div><div class="u">${esc((d.bank||'').toUpperCase())}</div><div class="label-pdf" style="text-align:right">TIPO DE CUENTA:</div><div class="u">${esc(d.accountType||'')}</div></div><table class="sign"><tr><th></th><th>NOMBRE</th><th>FIRMA</th><th>HORA</th><th>FECHA DE PAGO</th></tr><tr><td>SOLICITADO:</td><td>${esc((d.requestedBy||'').toUpperCase())}</td><td></td><td></td><td></td></tr><tr><td>AUTORIZADO:</td><td>${esc((resolvedAuthorizedBy(d)||'').toUpperCase())}</td><td></td><td></td><td></td></tr></table><div class="finance">DEPARTAMENTO FINANCIERO</div><div class="bottom"><div class="sig-line">REVISADO</div><div class="sig-line">AUTORIZADO</div></div>`;
+  return `<div class="doc-top"><div class="doc-title">Solicitud de Pago</div><div class="ha-wrap"><svg class="ha-logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 265.63 309.18"><g><polygon fill="#033029" points="202.53 179.82 205.46 179.82 203.98 175.59 202.53 179.82"/><polygon fill="#033029" points="136.71 216.01 165.83 216.01 151.27 187.4 136.71 216.01"/><path fill="#033029" d="M0,0V263.66H263.66V0H0ZM99.76,243.92h-16.06v-28.61H35.8v28.61H19.74v-70.28h16.06v27.61h47.89v-27.61h16.06v70.28Zm80.32,0l-7.53-14.86h-42.47l-7.53,14.86h-17.17l37.25-70.28h17.57l37.25,70.28h-17.37Zm16.96-60.81c-.65,.56-1.6,.84-2.87,.84s-2.19-.26-2.92-.77c-.72-.51-1.13-1.32-1.22-2.41h1.83c.09,.59,.33,1.02,.7,1.29s.93,.41,1.66,.41,1.21-.14,1.49-.42c.28-.28,.42-.63,.42-1.04,0-.32-.1-.61-.3-.85-.2-.25-.6-.43-1.22-.54l-1.27-.23c-1.02-.18-1.79-.49-2.32-.91s-.79-1.08-.79-1.97c0-.63,.16-1.16,.49-1.58,.33-.42,.77-.74,1.34-.96,.57-.22,1.22-.32,1.97-.32,.85,0,1.54,.12,2.07,.36,.53,.24,.93,.57,1.2,.97,.27,.4,.45,.86,.53,1.36l-1.75,.25c-.13-.49-.34-.86-.63-1.11s-.77-.36-1.43-.36c-.72,0-1.23,.12-1.53,.37s-.44,.56-.44,.94,.11,.68,.33,.88c.22,.2,.62,.35,1.2,.45l1.36,.26c1.06,.2,1.84,.53,2.32,.99,.49,.46,.73,1.11,.73,1.97s-.32,1.59-.97,2.15Zm9.73,.59l-.85-2.38h-3.88l-.84,2.38h-1.86l3.63-9.82h2.1l3.6,9.82h-1.91Z"/></g><g><path fill="#033029" d="M20.28,283.9h3.69v7.84h8.47v-7.84h3.69v19.64h-3.69v-8.47h-8.47v8.47h-3.69v-19.64Z"/><path fill="#033029" d="M39.29,283.85h3.49v3.11h-3.49v-3.11Zm.03,5.39h3.47v14.3h-3.47v-14.3Z"/><path fill="#033029" d="M45.7,283.9h3.47v19.64h-3.47v-19.64Z"/><path fill="#033029" d="M63.95,301.93c-1.28,1.37-3.03,2.05-5.27,2.05s-4-.66-5.24-1.99-1.86-3.19-1.86-5.57c0-1.58,.29-2.93,.88-4.07,.59-1.14,1.42-2.01,2.49-2.63,1.07-.61,2.34-.92,3.81-.92,2.24,0,3.98,.67,5.23,1.99,1.25,1.33,1.87,3.17,1.87,5.52s-.64,4.26-1.91,5.63Zm-5.24-.76c1.25,0,2.15-.44,2.72-1.32,.57-.88,.85-2.04,.85-3.49s-.28-2.6-.85-3.47c-.57-.86-1.48-1.29-2.72-1.29s-2.13,.43-2.7,1.29c-.57,.86-.85,2.02-.85,3.47s.28,2.61,.84,3.49c.56,.88,1.46,1.32,2.71,1.32Z"/><path fill="#033029" d="M67.43,299.22h3.3c.15,.81,.49,1.38,1.03,1.71,.54,.33,1.29,.49,2.24,.49s1.67-.17,2.09-.49c.42-.33,.63-.77,.63-1.32,0-.48-.14-.88-.41-1.21-.28-.33-.84-.56-1.71-.69l-1.71-.27c-1.72-.28-3.01-.73-3.87-1.38s-1.28-1.62-1.28-2.94,.55-2.42,1.66-3.18c1.11-.76,2.55-1.14,4.33-1.14,1.36,0,2.45,.17,3.29,.51,.83,.34,1.48,.81,1.93,1.42s.76,1.31,.92,2.12l-3.19,.41c-.2-.66-.5-1.16-.91-1.5-.4-.34-1.07-.51-2.01-.51-1.03,0-1.74,.17-2.15,.52-.4,.35-.61,.75-.61,1.21s.15,.86,.45,1.14c.3,.28,.9,.5,1.8,.65l1.9,.33c1.8,.33,3.07,.83,3.82,1.5,.75,.67,1.13,1.66,1.13,2.98s-.51,2.38-1.53,3.19c-1.02,.81-2.54,1.21-4.55,1.21-1.89,0-3.44-.37-4.65-1.11-1.21-.74-1.87-1.96-1.98-3.64Z"/><path fill="#033029" d="M94.94,304.39c-.44,1.1-.87,2-1.28,2.71-.41,.71-.89,1.23-1.44,1.57-.55,.34-1.26,.51-2.12,.51-.94,0-1.84-.15-2.72-.44l.58-2.64c.61,.18,1.14,.28,1.6,.28,.55,0,.98-.17,1.29-.51,.31-.34,.62-.93,.94-1.77l.47-1.29-5.97-13.56h3.82l3.8,9.96,3.44-9.96h3.69l-6.08,15.16Z"/><path fill="#033029" d="M113.81,283.9h4.21l7.21,19.64h-3.82l-1.71-4.76h-7.76l-1.68,4.76h-3.71l7.26-19.64Zm4.95,11.86l-2.94-8.44-2.92,8.44h5.86Z"/><path fill="#033029" d="M126.79,283.9h3.47v19.64h-3.47v-19.64Z"/><path fill="#033029" d="M146.52,301.45c0,1.61-.21,3-.62,4.15-.41,1.16-1.1,2.04-2.08,2.65-.97,.61-2.32,.92-4.04,.92-1.98,0-3.53-.37-4.64-1.11s-1.75-1.92-1.91-3.53h3.36c.15,.73,.46,1.26,.95,1.58,.49,.32,1.22,.48,2.21,.48,1.25,0,2.11-.36,2.59-1.07s.72-1.79,.72-3.22v-1.4c-.53,.7-1.16,1.24-1.9,1.62-.73,.39-1.59,.58-2.56,.58-1.32,0-2.42-.3-3.3-.91-.88-.61-1.54-1.44-1.97-2.52-.43-1.07-.65-2.3-.65-3.67,0-1.45,.25-2.71,.74-3.8,.49-1.08,1.21-1.92,2.13-2.52,.93-.6,2.02-.89,3.29-.89,.81,0,1.58,.15,2.31,.45,.73,.3,1.39,.85,1.98,1.64v-1.65h3.38v12.21Zm-6.96-1.18c1.19,0,2.08-.39,2.65-1.16,.58-.77,.87-1.74,.87-2.92v-.44c0-1.25-.28-2.26-.83-3.03s-1.41-1.16-2.59-1.16c-.99,0-1.81,.35-2.46,1.05s-.98,1.81-.98,3.33c0,1.05,.16,1.88,.47,2.52s.72,1.09,1.22,1.38c.5,.28,1.05,.43,1.64,.43Z"/><path fill="#033029" d="M161.25,301.93c-1.28,1.37-3.03,2.05-5.27,2.05s-4-.66-5.24-1.99c-1.24-1.33-1.86-3.19-1.86-5.57,0-1.58,.29-2.93,.88-4.07,.59-1.14,1.42-2.01,2.49-2.63,1.07-.61,2.34-.92,3.81-.92,2.24,0,3.98,.67,5.23,1.99,1.25,1.33,1.87,3.17,1.87,5.52s-.64,4.26-1.91,5.63Zm-5.24-.76c1.25,0,2.15-.44,2.72-1.32,.57-.88,.85-2.04,.85-3.49s-.28-2.6-.85-3.47c-.57-.86-1.48-1.29-2.72-1.29s-2.13,.43-2.7,1.29c-.57,.86-.85,2.02-.85,3.47s.28,2.61,.84,3.49c.56,.88,1.46,1.32,2.71,1.32Z"/><path fill="#033029" d="M178.92,303.54h-3.36v-1.87c-.57,.75-1.22,1.33-1.95,1.72-.73,.39-1.6,.59-2.59,.59-1.32,0-2.42-.32-3.3-.96-.88-.64-1.54-1.53-1.98-2.65-.44-1.13-.66-2.42-.66-3.87,0-2.38,.55-4.26,1.66-5.64,1.11-1.38,2.63-2.06,4.55-2.06,.75,0,1.49,.15,2.21,.45,.72,.3,1.37,.82,1.94,1.55v-6.9h3.47v19.64Zm-8.6-2.85c.5,.3,1.04,.45,1.61,.45,1.12,0,1.99-.38,2.61-1.14s.94-1.83,.94-3.2v-.77c0-1.52-.31-2.65-.92-3.37-.61-.72-1.44-1.09-2.49-1.09s-1.83,.37-2.48,1.11c-.64,.74-.96,1.98-.96,3.7,0,1.17,.16,2.11,.47,2.81,.31,.7,.72,1.2,1.22,1.5Z"/><path fill="#033029" d="M193.68,301.93c-1.28,1.37-3.03,2.05-5.27,2.05s-4-.66-5.24-1.99c-1.24-1.33-1.86-3.19-1.86-5.57,0-1.58,.29-2.93,.88-4.07,.59-1.14,1.42-2.01,2.49-2.63,1.07-.61,2.34-.92,3.81-.92,2.24,0,3.98,.67,5.23,1.99,1.25,1.33,1.87,3.17,1.87,5.52s-.64,4.26-1.91,5.63Zm-5.24-.76c1.25,0,2.15-.44,2.72-1.32,.57-.88,.85-2.04,.85-3.49s-.28-2.6-.85-3.47c-.57-.86-1.48-1.29-2.72-1.29s-2.13,.43-2.7,1.29c-.57,.86-.85,2.02-.85,3.47s.28,2.61,.84,3.49c.56,.88,1.46,1.32,2.71,1.32Zm1.24-18.05h3.96l-4.02,4.21h-3.19l3.25-4.21Z"/><path fill="#033029" d="M197.99,289.24h3.38v1.98c.72-.9,1.47-1.53,2.26-1.88,.79-.36,1.6-.54,2.45-.54,1.58,0,2.77,.45,3.58,1.33,.81,.89,1.21,2.17,1.21,3.84v9.57h-3.47v-8.91c0-1.06-.2-1.82-.59-2.27s-.99-.67-1.8-.67c-.46,0-.9,.08-1.33,.25-.43,.17-.82,.42-1.17,.77-.35,.31-.61,.65-.78,1-.17,.36-.26,.83-.26,1.42v8.42h-3.47v-14.3Z"/><path fill="#033029" d="M232.33,302.36c-1.29,1.12-3.2,1.68-5.74,1.68s-4.38-.51-5.83-1.54-2.27-2.63-2.45-4.81h3.66c.18,1.17,.65,2.03,1.4,2.57,.75,.54,1.86,.81,3.33,.81s2.43-.28,2.99-.84,.84-1.25,.84-2.08c0-.64-.2-1.21-.59-1.71-.39-.49-1.21-.85-2.43-1.07l-2.53-.47c-2.04-.37-3.58-.98-4.64-1.83-1.05-.85-1.58-2.17-1.58-3.95,0-1.27,.33-2.32,.98-3.16,.65-.84,1.54-1.48,2.68-1.91,1.14-.43,2.45-.65,3.93-.65,1.71,0,3.09,.24,4.14,.73,1.05,.49,1.85,1.13,2.39,1.94,.54,.81,.89,1.72,1.06,2.72l-3.49,.5c-.26-.99-.68-1.73-1.27-2.21-.59-.49-1.54-.73-2.86-.73-1.45,0-2.47,.25-3.05,.74s-.88,1.12-.88,1.87,.22,1.36,.66,1.76c.44,.4,1.24,.71,2.39,.91l2.72,.52c2.13,.4,3.68,1.06,4.65,1.98,.97,.92,1.46,2.23,1.46,3.93s-.65,3.17-1.94,4.29Z"/><path fill="#033029" d="M236.25,299.5h3.6v4.04h-3.6v-4.04Z"/><path fill="#033029" d="M248.88,283.9h4.21l7.21,19.64h-3.82l-1.71-4.76h-7.76l-1.68,4.76h-3.71l7.26-19.64Zm4.95,11.86l-2.94-8.44-2.92,8.44h5.86Z"/><path fill="#033029" d="M262.03,299.5h3.6v4.04h-3.6v-4.04Z"/></g></svg><div class="ha-text">Hilos y Algodón, S.A.</div></div></div><div class="pay-row"><div class="label-pdf">MARQUE CON X:</div><div class="label-pdf" style="text-align:right">TRANSFERENCIA</div><div class="box-x">${d.paymentType==='transferencia'?'X':''}</div><div class="label-pdf" style="text-align:right">CHEQUE</div><div class="box-x">${d.paymentType==='cheque'?'X':''}</div></div><div class="line-row"><div class="label-pdf">FECHA:</div><div class="u">${esc(formatDate(d.date))}</div></div><div class="line-row"><div class="label-pdf">A NOMBRE DE</div><div class="u">${esc((d.beneficiary||'').toUpperCase())}</div></div><div class="line-row"><div class="label-pdf">MONTO EN ${esc(c)}</div><div class="u">${esc(formatMoney(c,d.amount))}</div></div><div class="line-row"><div class="label-pdf">EN LETRAS</div><div class="u">${parseAmount(d.amount)?esc(letters(c,d.amount)):''}</div></div><div class="concept-gap"></div><div class="line-row concept-row"><div class="label-pdf">CONCEPTO:</div><div class="u concept">${esc((d.concept||'').toUpperCase())}</div></div><div class="line-row"><div class="label-pdf">No. DE CUENTA BANCARIA:</div><div class="u">${esc(d.account||'')}</div></div><div class="bank-row"><div class="label-pdf">BANCO:</div><div class="u">${esc((d.bank||'').toUpperCase())}</div><div class="label-pdf" style="text-align:right">TIPO DE CUENTA:</div><div class="u">${esc(d.accountType||'')}</div></div><table class="sign"><tr><th></th><th>NOMBRE</th><th>FIRMA</th><th>HORA</th><th>FECHA DE PAGO</th></tr><tr><td>SOLICITADO:</td><td>${esc((resolvedRequestedBy(d)||'').toUpperCase())}</td><td></td><td></td><td></td></tr><tr><td>AUTORIZADO:</td><td>${esc((resolvedAuthorizedBy(d)||'').toUpperCase())}</td><td></td><td></td><td></td></tr></table><div class="finance">DEPARTAMENTO FINANCIERO</div><div class="bottom"><div class="sig-line">REVISADO</div><div class="sig-line">AUTORIZADO</div></div>`;
 }
 
 function updatePreview(){
@@ -1336,6 +1390,8 @@ function validationIssues(d){
   if(!d.bank) issues.push('Banco');
   if(!d.account) issues.push('No. de cuenta bancaria');
   if(!d.concept) issues.push('Concepto');
+  if(!resolvedRequestedBy(d)) issues.push('Solicitado por (nombre de quien solicita)');
+  if(!resolvedAuthorizedBy(d)) issues.push('Autorizado por (nombre de quien autoriza)');
   return issues;
 }
 
@@ -1370,7 +1426,7 @@ function confirmAction(action,id=null){
   $('modalText').textContent= action==='close'?'Antes de cerrar, confirma que la información está correcta o que ya no la necesitas.':'Revisa los datos antes de continuar.';
   $('fileNameBox').style.display=(action==='close')?'none':'block';
   $('fileNameInput').value=filenameBase();
-  $('summary').innerHTML=`<div class="summary-row"><b>Beneficiario</b><span>${esc(d.beneficiary||'Sin beneficiario')}</span></div><div class="summary-row"><b>Monto</b><span>${esc(formatMoney(d.currency,d.amount))}</span></div><div class="summary-row"><b>Banco</b><span>${esc(d.bank||'Sin banco')}</span></div><div class="summary-row"><b>Concepto</b><span>${esc(d.concept||'Sin concepto')}</span></div><div class="summary-row"><b>Solicita</b><span>${esc(d.requestedBy||'Sin nombre')}</span></div><div class="summary-row"><b>Autoriza</b><span>${esc(resolvedAuthorizedBy(d)||'Sin nombre')}</span></div>`;
+  $('summary').innerHTML=`<div class="summary-row"><b>Beneficiario</b><span>${esc(d.beneficiary||'Sin beneficiario')}</span></div><div class="summary-row"><b>Monto</b><span>${esc(formatMoney(d.currency,d.amount))}</span></div><div class="summary-row"><b>Banco</b><span>${esc(d.bank||'Sin banco')}</span></div><div class="summary-row"><b>Concepto</b><span>${esc(d.concept||'Sin concepto')}</span></div><div class="summary-row"><b>Solicita</b><span>${esc(resolvedRequestedBy(d)||'Sin nombre')}</span></div><div class="summary-row"><b>Autoriza</b><span>${esc(resolvedAuthorizedBy(d)||'Sin nombre')}</span></div>`;
   $('modalConfirm').onclick=executeAction;
   $('modalBack').classList.add('visible');
 }
@@ -1448,6 +1504,7 @@ function toast(t){
 $('open-gallery-btn').onclick=openHistory;
 $('tab-add-btn').onclick=newSDP;
 $('authorizedBy').addEventListener('change',()=>{toggleAuthorizedByOther();handleInput()});
+$('requestedBy').addEventListener('change',()=>{toggleRequestedByOther();handleInput()});
 $('gallery-modal').addEventListener('click',e=>{if(e.target.id==='gallery-modal')closeHistory()});
 $('modalBack').addEventListener('click',e=>{if(e.target.id==='modalBack')closeModal()});
 
