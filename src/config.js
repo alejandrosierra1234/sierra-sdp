@@ -21,6 +21,7 @@ export function loadConfig({ requireSecrets = true } = {}) {
     port: integer("PORT", 3000),
     nodeEnv: value("NODE_ENV", "development"),
     publicWebhookUrl: value("PUBLIC_WEBHOOK_URL"),
+    autoRegisterWebhook: bool("AUTO_REGISTER_WEBHOOK", false),
     companyName: value("COMPANY_NAME", "Hilos y Algodón, S.A."),
     includeAuthorizationLines: bool("INCLUDE_AUTHORIZATION_LINES", true),
     monday: {

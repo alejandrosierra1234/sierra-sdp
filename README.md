@@ -25,7 +25,7 @@ El repositorio incluye `render.yaml` para crear un Web Service de Render con `np
 
 [Desplegar el servicio en Render](https://render.com/deploy?repo=https://github.com/alejandrosierra1234/sierra-sdp)
 
-Después del despliegue, defina localmente `PUBLIC_WEBHOOK_URL=https://SU-SERVICIO.onrender.com/api/monday/webhook`, ejecute `npm run verify:deployment` y finalmente `npm run register:webhook`.
+En el Blueprint de Render, `AUTO_REGISTER_WEBHOOK=true`: al arrancar, el servicio registra el webhook de forma idempotente y expone su estado en `GET /healthz`. Los comandos `verify:deployment` y `register:webhook` permanecen disponibles para comprobaciones o despliegues manuales.
 
 La guía completa de configuración, despliegue, trigger, seguridad y columnas detectadas está en [docs/monday-combustible.md](docs/monday-combustible.md).
 

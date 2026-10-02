@@ -7,6 +7,7 @@ import { logger } from "./src/logger.js";
 import { MondayClient } from "./src/monday-client.js";
 import { FuelReportService } from "./src/report-service.js";
 import { createWebhookHandler } from "./src/webhook.js";
+import { registerMondayWebhook } from "./src/webhook-registration.js";
 
 const config = loadConfig();
 const app = express();
@@ -15,8 +16,9 @@ app.use(express.json({ limit: "256kb" }));
 
 const client = new MondayClient(config.monday, { logger });
 const service = new FuelReportService({ client, config, logger });
+let webhookRegistration = { status: config.autoRegisterWebhook ? "pending" : "manual" };
 app.post("/api/monday/webhook", createWebhookHandler({ config, service, logger }));
-app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
+app.get("/healthz", (_req, res) => res.json({ status: "ok", webhook: webhookRegistration.status }));
 
 const root = dirname(fileURLToPath(import.meta.url));
 app.get("/", (_req, res) => res.sendFile(join(root, "index.html")));
@@ -27,4 +29,14 @@ app.use((error, _req, res, _next) => {
   return res.status(500).json({ error: "Internal server error" });
 });
 
-app.listen(config.port, () => logger.info("server_started", { port: config.port }));
+app.listen(config.port, async () => {
+  logger.info("server_started", { port: config.port });
+  if (!config.autoRegisterWebhook) return;
+  try {
+    webhookRegistration = await registerMondayWebhook({ client, config });
+    logger.info("monday_webhook_ready", webhookRegistration);
+  } catch (error) {
+    webhookRegistration = { status: "error" };
+    logger.error("monday_webhook_registration_failed", { error: error.message });
+  }
+});

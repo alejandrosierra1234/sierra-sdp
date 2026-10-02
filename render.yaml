@@ -15,6 +15,10 @@ services:
         sync: false
       - key: MONDAY_WEBHOOK_SECRET
         sync: false
+      - key: PUBLIC_WEBHOOK_URL
+        value: https://sierra-sdp-fuel-reports.onrender.com/api/monday/webhook
+      - key: AUTO_REGISTER_WEBHOOK
+        value: "true"
       - key: MONDAY_REQUIRE_JWT
         value: "false"
       - key: MONDAY_BOARD_ID
@@ -33,4 +37,3 @@ services:
         value: USD
       - key: REIMBURSEMENT_CURRENCY
         value: GTQ
-
