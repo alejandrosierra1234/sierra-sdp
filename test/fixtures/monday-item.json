@@ -1,0 +1,38 @@
+{
+  "id": "123456789",
+  "name": "Reporte septiembre",
+  "board": { "id": "18433758498" },
+  "column_values": [
+    { "id": "person", "text": "Persona de Prueba", "value": null },
+    { "id": "date_mm7r76eb", "text": "2026-09-01", "value": "{\"date\":\"2026-09-01\"}" },
+    { "id": "date4", "text": "2026-09-30", "value": "{\"date\":\"2026-09-30\"}" },
+    { "id": "lookup_mm7rbkya", "text": "999", "value": "{\"display_value\":\"999\"}" },
+    { "id": "numeric_mm7rt81x", "text": "0.99", "value": "{\"number\":0.99}" },
+    { "id": "numeric_mm7rpc7x", "text": "7.6600", "value": "{\"number\":7.66}" },
+    { "id": "boolean_mm7ry62j", "text": "v", "value": "{\"checked\":\"true\"}" },
+    { "id": "color_mm7r9b1w", "text": "Aprobado para generar", "value": "{\"label\":\"Aprobado para generar\"}" },
+    { "id": "file_mm7rp1y1", "text": "", "value": "{\"files\":[]}", "files": [] }
+  ],
+  "subitems": [
+    {
+      "id": "223344551",
+      "name": "Oficina central",
+      "column_values": [
+        { "id": "date0", "text": "2026-09-03", "value": "{\"date\":\"2026-09-03\"}" },
+        { "id": "text_mm7rn7he", "text": "Planta norte", "value": "\"Planta norte\"" },
+        { "id": "numeric_mm7r864e", "text": "12.5", "value": "{\"number\":12.5}" },
+        { "id": "file_mm7r1zdy", "text": "odometro.jpg", "value": "{\"files\":[{\"assetId\":\"8001\",\"name\":\"odometro.jpg\"}]}", "files": [{ "asset_id": "8001", "name": "odometro.jpg", "asset": { "id": "8001", "public_url": "https://files.example.invalid/secret", "file_extension": "jpg", "file_size": 1000 } }] }
+      ]
+    },
+    {
+      "id": "223344552",
+      "name": "Planta norte",
+      "column_values": [
+        { "id": "date0", "text": "2026-09-03", "value": "{\"date\":\"2026-09-03\"}" },
+        { "id": "text_mm7rn7he", "text": "Oficina central", "value": "\"Oficina central\"" },
+        { "id": "numeric_mm7r864e", "text": "12,75", "value": "{\"number\":12.75}" },
+        { "id": "file_mm7r1zdy", "text": "", "value": "{\"files\":[]}", "files": [] }
+      ]
+    }
+  ]
+}

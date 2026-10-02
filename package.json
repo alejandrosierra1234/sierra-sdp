@@ -1,0 +1,25 @@
+{
+  "name": "sierra-sdp",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test",
+    "sample": "node scripts/generate-sample.js",
+    "inspect:monday": "node scripts/inspect-monday-schema.js",
+    "verify:deployment": "node scripts/verify-deployment.js",
+    "register:webhook": "node scripts/register-monday-webhook.js --apply"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pdf-lib": "^1.17.1",
+    "sharp": "^0.35.5"
+  }
+}
