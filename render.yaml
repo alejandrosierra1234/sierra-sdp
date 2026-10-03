@@ -18,7 +18,7 @@ services:
       - key: PUBLIC_WEBHOOK_URL
         value: https://sierra-sdp-fuel-reports.onrender.com/api/monday/webhook
       - key: AUTO_REGISTER_WEBHOOK
-        value: "true"
+        value: "false"
       - key: MONDAY_REQUIRE_JWT
         value: "false"
       - key: MONDAY_BOARD_ID

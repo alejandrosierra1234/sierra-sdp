@@ -135,7 +135,7 @@ El generador conserva tamaño carta, márgenes de 38 pt, Helvetica/Arial, encabe
 4. Registre el webhook de monday con la URL de Supabase y el parámetro `key`.
 5. Envíe un reporte anonimizado, cambie **Aprobación** a **Aprobado para generar** y confirme que el archivo con hash aparece en `Reporte PDF`.
 
-Render puede mantenerse temporalmente durante la migración, pero debe retirarse después de validar Supabase para evitar dos generadores activos.
+Render debe permanecer suspendido y con `AUTO_REGISTER_WEBHOOK=false`; mantenerlo activo registraría un segundo generador y produciría archivos duplicados.
 
 ## Límites y seguridad
 
