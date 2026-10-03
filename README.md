@@ -1,8 +1,8 @@
 # sierra-sdp
 
-Aplicación de Solicitudes de Pago (SDP) y servicio automático de reportes de combustible desde monday.com.
+Aplicación de Solicitudes de Pago (SDP) y generación automática de reportes de combustible desde monday.com mediante una Supabase Edge Function.
 
-La interfaz estática original sigue disponible en `/`. El backend recibe un webhook seguro, consulta el item y sus subitems, descarga los respaldos, genera un PDF corporativo y lo adjunta a `Reporte PDF`.
+La interfaz estática original sigue disponible en `/`. La función `fuel-report` recibe un webhook seguro, consulta el item y sus subitems, descarga los respaldos, genera un PDF corporativo y lo adjunta a `Reporte PDF`.
 
 ## Inicio rápido
 
@@ -19,13 +19,18 @@ npm start
 
 El endpoint de salud es `GET /healthz` y el webhook es `POST /api/monday/webhook`.
 
-## Despliegue directo
+## Despliegue
 
-El repositorio incluye `render.yaml` para crear un Web Service de Render con `npm ci`, `npm start`, health check y todas las variables no secretas. Durante la creación, Render solicitará `MONDAY_API_TOKEN` y `MONDAY_WEBHOOK_SECRET`; nunca los guarde en Git.
+La implementación activa está en `supabase/functions/fuel-report/index.ts`. Se despliega en el mismo proyecto Supabase que las automatizaciones existentes de Suppliers:
 
-[Desplegar el servicio en Render](https://render.com/deploy?repo=https://github.com/alejandrosierra1234/sierra-sdp)
+```bash
+supabase functions deploy fuel-report --project-ref vhyddogeemohtqijohry --no-verify-jwt
+supabase secrets set FUEL_REPORT_WEBHOOK_SECRET=... --project-ref vhyddogeemohtqijohry
+```
 
-En el Blueprint de Render, `AUTO_REGISTER_WEBHOOK=true`: al arrancar, el servicio registra el webhook de forma idempotente y expone su estado en `GET /healthz`. Los comandos `verify:deployment` y `register:webhook` permanecen disponibles para comprobaciones o despliegues manuales.
+`MONDAY_API_TOKEN` ya es un secreto compartido del proyecto. La URL de monday debe usar `?key=FUEL_REPORT_WEBHOOK_SECRET`. `supabase/config.toml` desactiva la verificación JWT únicamente para esta función porque monday autentica con el secreto de webhook.
+
+El servicio Node/Render queda como implementación de compatibilidad hasta completar la migración; no es el destino arquitectónico recomendado.
 
 La guía completa de configuración, despliegue, trigger, seguridad y columnas detectadas está en [docs/monday-combustible.md](docs/monday-combustible.md).
 

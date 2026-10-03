@@ -4,7 +4,7 @@
 
 ```text
 Aprobación = "Aprobado para generar"
-        -> webhook autenticado
+        -> webhook autenticado en Supabase Edge Functions
         -> validación de board, item y columna
         -> consulta del item y sus subitems
         -> suma y cálculo en el servidor
@@ -51,19 +51,14 @@ Board: `MKT Reporte de Combustible` (`18433758498`). Los IDs se obtuvieron de la
 
 El tablero no contenía items al momento de la inspección. Por eso no se hizo una carga destructiva o de prueba sobre datos reales. La consulta, el multipart upload y la verificación posterior están cubiertos por pruebas automatizadas y quedan listos para ejecutarse con el primer item válido.
 
-## Variables de entorno
+## Secretos de Supabase
 
-Copie `.env.example` a `.env`. Como mínimo configure:
+La Edge Function utiliza:
 
-- `MONDAY_API_TOKEN`: token personal u OAuth con `boards:read`, `boards:write` y `assets:read`.
-- `MONDAY_BOARD_ID`: `18433758498`.
-- `MONDAY_REPORT_PDF_COLUMN_ID`: `file_mm7rp1y1`.
-- IDs de columnas y subcolumnas: ya aparecen con los valores detectados en `.env.example`.
-- `COMPANY_NAME`: empresa que aparece en el encabezado.
-- `PUBLIC_WEBHOOK_URL`: URL HTTPS pública exacta.
-- Uno de estos mecanismos de autenticidad:
-  - `MONDAY_SIGNING_SECRET` y `MONDAY_REQUIRE_JWT=true` para un webhook creado por una app monday con OAuth; o
-  - `MONDAY_WEBHOOK_SECRET` para un board webhook estándar. Agregue el mismo secreto como query param en la URL, sin publicarlo.
+- `MONDAY_API_TOKEN`: token con `boards:read`, `boards:write` y `assets:read`.
+- `FUEL_REPORT_WEBHOOK_SECRET`: secreto aleatorio usado como `?key=...` por monday.
+
+Los IDs del tablero, columnas y la tarifa fija están en el código para que no puedan desviarse mediante el formulario o variables de despliegue.
 
 No registre ni copie tokens, secretos o URLs temporales de assets en logs.
 
@@ -71,13 +66,13 @@ No registre ni copie tokens, secretos o URLs temporales de assets en logs.
 
 ### Opción A: board webhook estándar (mínimo cambio)
 
-1. Despliegue el servicio y confirme `https://SU-DOMINIO/healthz`.
-2. Genere un secreto aleatorio de al menos 32 bytes y guárdelo como `MONDAY_WEBHOOK_SECRET`.
+1. Despliegue `fuel-report` en Supabase con verificación JWT desactivada para esta función.
+2. Genere un secreto aleatorio de al menos 32 bytes y guárdelo como `FUEL_REPORT_WEBHOOK_SECRET`.
 3. En el tablero abra **Automate** -> **Integrations** -> busque **Webhooks**.
 4. Seleccione la receta que envía un webhook cuando cambia una columna/estado.
 5. Elija **Aprobación** y use esta URL, sustituyendo los valores:
 
-   `https://SU-DOMINIO/api/monday/webhook?secret=SECRETO`
+   `https://vhyddogeemohtqijohry.supabase.co/functions/v1/fuel-report?key=SECRETO`
 
 6. monday enviará un `challenge`; el endpoint lo devuelve automáticamente.
 7. Configure/seleccione la etiqueta **Aprobado para generar**. El servidor ignora cualquier otro valor.
@@ -134,26 +129,13 @@ El generador conserva tamaño carta, márgenes de 38 pt, Helvetica/Arial, encabe
 
 ## Despliegue
 
-Use un servicio Node 20 de larga duración (Render, Railway, Fly.io, Cloud Run o equivalente):
+1. Autentique la CLI oficial de Supabase.
+2. Ejecute `supabase functions deploy fuel-report --project-ref vhyddogeemohtqijohry --no-verify-jwt`.
+3. Guarde `FUEL_REPORT_WEBHOOK_SECRET` en Edge Function Secrets; `MONDAY_API_TOKEN` se comparte con las funciones existentes.
+4. Registre el webhook de monday con la URL de Supabase y el parámetro `key`.
+5. Envíe un reporte anonimizado, cambie **Aprobación** a **Aprobado para generar** y confirme que el archivo con hash aparece en `Reporte PDF`.
 
-1. Build command: `npm ci`.
-2. Start command: `npm start`.
-3. Configure todas las variables del `.env.example` en el gestor de secretos del proveedor.
-4. Exponga el puerto indicado por `PORT` y HTTPS público.
-5. Mantenga al menos una instancia activa mientras el webhook esté habilitado. El procesamiento continúa después de responder HTTP 202.
-6. Ejecute `npm run inspect:monday` con las variables de producción y compare la salida con la tabla antes de habilitar el trigger.
-7. Envíe un reporte de prueba anonimizado desde el WorkForm, cambie **Aprobación** a **Aprobado para generar** y confirme que el nombre con hash aparece en `Reporte PDF`.
-
-### Camino automatizado con Render
-
-1. Suba estos cambios al repositorio de GitHub.
-2. En Render cree un Blueprint apuntando al repositorio; `render.yaml` configura el proceso, health check y columnas.
-3. Ingrese `MONDAY_API_TOKEN` y un `MONDAY_WEBHOOK_SECRET` aleatorio de al menos 32 bytes cuando Render los solicite.
-4. Copie `.env.example` a `.env` localmente e ingrese esos mismos secretos y la URL HTTPS final en `PUBLIC_WEBHOOK_URL`.
-5. Ejecute `npm run verify:deployment`. No continúe hasta recibir `"status": "ready"`.
-6. Ejecute `npm run register:webhook`. El comando evita crear otro webhook para la misma columna si ya existe uno.
-
-Render proporciona una URL pública `onrender.com`, admite servicios Node/Express y permite declarar secretos como `sync: false` en un Blueprint. El plan gratuito puede entrar en reposo después de inactividad; para webhooks sensibles a latencia use una instancia que permanezca activa.
+Render puede mantenerse temporalmente durante la migración, pero debe retirarse después de validar Supabase para evitar dos generadores activos.
 
 ## Límites y seguridad
 

@@ -1,0 +1,3 @@
+[functions.fuel-report]
+verify_jwt = false
+
