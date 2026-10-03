@@ -11,6 +11,7 @@ const FIXED_RATE_USD_PER_KM = 0.25;
 const MAX_ATTACHMENTS = 40;
 const MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENT_BYTES = 100 * 1024 * 1024;
+const inFlight = new Map<string, Promise<void>>();
 
 const COLUMNS = {
   collaborator: "person",
@@ -257,6 +258,9 @@ async function processItem(itemId: string) {
   if ((await listFiles(itemId)).some((file: { name: string }) => file.name === report.filename)) { console.log(JSON.stringify({ event: "fuel_report_skipped_existing", itemId, version: report.version })); return; }
   await downloadProofs(report);
   const pdf = await generatePdf(report);
+  // A repeated webhook can arrive while the first invocation is generating the PDF.
+  // Check again immediately before the irreversible upload.
+  if ((await listFiles(itemId)).some((file: { name: string }) => file.name === report.filename)) { console.log(JSON.stringify({ event: "fuel_report_skipped_concurrent", itemId, version: report.version })); return; }
   const uploaded = await upload(itemId, report.filename, pdf);
   for (let attempt = 0; attempt < 4; attempt += 1) { if ((await listFiles(itemId)).some((file: { id: string; name: string }) => file.id === String(uploaded.id) || file.name === report.filename)) { console.log(JSON.stringify({ event: "fuel_report_completed", itemId, version: report.version, assetId: String(uploaded.id), bytes: pdf.length })); return; } await delay(400 * 2 ** attempt); }
   throw new Error("Uploaded PDF was not visible after verification");
@@ -279,7 +283,13 @@ Deno.serve(async (request) => {
   if (!/^\d+$/.test(itemId)) return json({ error: "Invalid item ID" }, 400);
   if (columnId !== TRIGGER_COLUMN_ID) return json({ status: "ignored", reason: "unrelated_column" });
   if (label.toLocaleLowerCase("es") !== TRIGGER_LABEL.toLocaleLowerCase("es")) return json({ status: "ignored", reason: "trigger_label_not_selected" });
-  const work = processItem(itemId).catch((error) => console.error(JSON.stringify({ event: "fuel_report_failed", itemId, error: error instanceof Error ? error.message : String(error) })));
+  const existingWork = inFlight.get(itemId);
+  if (existingWork) return json({ status: "accepted", itemId, duplicate: true }, 202);
+  let work: Promise<void>;
+  work = processItem(itemId)
+    .catch((error) => console.error(JSON.stringify({ event: "fuel_report_failed", itemId, error: error instanceof Error ? error.message : String(error) })))
+    .finally(() => { if (inFlight.get(itemId) === work) inFlight.delete(itemId); });
+  inFlight.set(itemId, work);
   const runtime = globalThis as typeof globalThis & { EdgeRuntime?: { waitUntil(promise: Promise<unknown>): void } };
   if (runtime.EdgeRuntime?.waitUntil) runtime.EdgeRuntime.waitUntil(work); else await work;
   return json({ status: "accepted", itemId }, 202);
