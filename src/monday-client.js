@@ -150,6 +150,14 @@ export class MondayClient {
     return data.items[0];
   }
 
+  async getItems(itemIds) {
+    const ids = [...new Set(itemIds.map(String))];
+    if (!ids.length) return [];
+    if (ids.some((id) => !/^\d+$/.test(id))) throw new Error("Invalid item ID");
+    const data = await this.request(ITEM_QUERY, { itemIds: ids });
+    return data.items || [];
+  }
+
   async inspectBoard(boardId) {
     const query = `query BoardSchema($boardIds: [ID!]!) { boards(ids: $boardIds) { id name columns { id title type settings } } }`;
     const data = await this.request(query, { boardIds: [String(boardId)] });
@@ -220,6 +228,10 @@ export class MondayClient {
       if (result.errors?.length) throw new MondayApiError(`report upload failed: ${result.errors[0].message}`, { retryable: false });
       return result.data?.add_file_to_column;
     });
+  }
+
+  async uploadPdf(itemId, columnId, filename, buffer) {
+    return this.uploadReport(itemId, columnId, filename, buffer);
   }
 
   async listReportFiles(itemId, columnId) {

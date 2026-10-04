@@ -8,6 +8,8 @@ import { MondayClient } from "./src/monday-client.js";
 import { FuelReportService } from "./src/report-service.js";
 import { createWebhookHandler } from "./src/webhook.js";
 import { registerMondayWebhook } from "./src/webhook-registration.js";
+import { PaymentDossierService } from "./src/dossier-service.js";
+import { createDossierHandler, dossierCors } from "./src/dossier-route.js";
 
 const config = loadConfig();
 const app = express();
@@ -16,8 +18,11 @@ app.use(express.json({ limit: "256kb" }));
 
 const client = new MondayClient(config.monday, { logger });
 const service = new FuelReportService({ client, config, logger });
+const dossierService = new PaymentDossierService({ client, config, logger });
 let webhookRegistration = { status: config.autoRegisterWebhook ? "pending" : "manual" };
 app.post("/api/monday/webhook", createWebhookHandler({ config, service, logger }));
+app.options("/api/payment-dossier", dossierCors(config));
+app.post("/api/payment-dossier", dossierCors(config), createDossierHandler({ config, service: dossierService, logger }));
 app.get("/healthz", (_req, res) => res.json({ status: "ok", webhook: webhookRegistration.status }));
 
 const root = dirname(fileURLToPath(import.meta.url));

@@ -19,6 +19,8 @@ npm start
 
 El endpoint de salud es `GET /healthz` y el webhook es `POST /api/monday/webhook`.
 
+La función activa `payment-dossier` de Supabase reúne la SDP y los documentos de los items vinculados, conserva la SDP como primera página, genera un único PDF y lo carga en `Expediente para aprobación`. Se activa cuando se carga o cambia la SDP, marca `Preparando expediente` y solo cambia a `Enviar a firma` después de verificar el PDF cargado. Es determinista e idempotente: los mismos documentos producen la misma versión y un reintento no duplica el expediente. No utiliza IA ni créditos de Vibe durante la ejecución.
+
 ## Despliegue
 
 La implementación activa está en `supabase/functions/fuel-report/index.ts`. Se despliega en el mismo proyecto Supabase que las automatizaciones existentes de Suppliers:
@@ -26,6 +28,8 @@ La implementación activa está en `supabase/functions/fuel-report/index.ts`. Se
 ```bash
 supabase functions deploy fuel-report --project-ref vhyddogeemohtqijohry --no-verify-jwt
 supabase secrets set FUEL_REPORT_WEBHOOK_SECRET=... --project-ref vhyddogeemohtqijohry
+supabase functions deploy payment-dossier --project-ref vhyddogeemohtqijohry --no-verify-jwt
+supabase secrets set PAYMENT_DOSSIER_WEBHOOK_SECRET=... --project-ref vhyddogeemohtqijohry
 ```
 
 `MONDAY_API_TOKEN` ya es un secreto compartido del proyecto. La URL de monday debe usar `?key=FUEL_REPORT_WEBHOOK_SECRET`. `supabase/config.toml` desactiva la verificación JWT únicamente para esta función porque monday autentica con el secreto de webhook.

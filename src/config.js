@@ -55,6 +55,15 @@ export function loadConfig({ requireSecrets = true } = {}) {
       requestTimeoutMs: integer("MONDAY_REQUEST_TIMEOUT_MS", 15_000),
       maxRetries: integer("MONDAY_MAX_RETRIES", 3)
     },
+    dossier: {
+      paymentsBoardId: value("MONDAY_PAYMENTS_BOARD_ID", "18432867606"),
+      sdpColumnId: value("MONDAY_SDP_COLUMN_ID", "file_mm7sxf2y"),
+      outputColumnId: value("MONDAY_DOSSIER_COLUMN_ID", "file_mm7m9w7t"),
+      allowedOrigins: value(
+        "DOSSIER_ALLOWED_ORIGINS",
+        "https://sierratextiles.monday.com,https://payment-hub-sierratextiles.monday.app,https://payment-hub-sierratextiles-draft.v.monday.app"
+      ).split(",").map((origin) => origin.trim()).filter(Boolean)
+    },
     // Business rule: the form/board must never control this value.
     fuelRatePerKm: FIXED_FUEL_RATE_PER_KM,
     fuelRateCurrency: value("FUEL_RATE_CURRENCY", "USD"),
@@ -70,6 +79,9 @@ export function loadConfig({ requireSecrets = true } = {}) {
   if (!/^[a-zA-Z0-9_]+$/.test(config.monday.reportPdfColumnId)) {
     throw new Error("MONDAY_REPORT_PDF_COLUMN_ID is invalid");
   }
+  if (!/^\d+$/.test(config.dossier.paymentsBoardId)) throw new Error("MONDAY_PAYMENTS_BOARD_ID must contain digits only");
+  if (!/^[a-zA-Z0-9_]+$/.test(config.dossier.sdpColumnId)) throw new Error("MONDAY_SDP_COLUMN_ID is invalid");
+  if (!/^[a-zA-Z0-9_]+$/.test(config.dossier.outputColumnId)) throw new Error("MONDAY_DOSSIER_COLUMN_ID is invalid");
   if (requireSecrets && !config.monday.token) throw new Error("MONDAY_API_TOKEN is required");
   if (requireSecrets && !config.monday.signingSecret && !config.monday.webhookSecret) {
     throw new Error("Set MONDAY_SIGNING_SECRET or MONDAY_WEBHOOK_SECRET");

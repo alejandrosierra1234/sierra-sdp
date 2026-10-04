@@ -1,3 +1,5 @@
 [functions.fuel-report]
 verify_jwt = false
 
+[functions.payment-dossier]
+verify_jwt = false
