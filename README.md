@@ -34,7 +34,7 @@ supabase secrets set PAYMENT_DOSSIER_WEBHOOK_SECRET=... --project-ref vhyddogeem
 
 `MONDAY_API_TOKEN` ya es un secreto compartido del proyecto. La URL de monday debe usar `?key=FUEL_REPORT_WEBHOOK_SECRET`. `supabase/config.toml` desactiva la verificación JWT únicamente para esta función porque monday autentica con el secreto de webhook.
 
-El servicio Node/Render queda como implementación de compatibilidad, pero está suspendido y `AUTO_REGISTER_WEBHOOK=false`; la única ruta activa de generación es Supabase.
+Supabase es la única infraestructura de producción autorizada para estos flujos. El proyecto no incluye configuración de despliegue para Render ni debe registrarse un segundo generador.
 
 La guía completa de configuración, despliegue, trigger, seguridad y columnas detectadas está en [docs/monday-combustible.md](docs/monday-combustible.md).
 
